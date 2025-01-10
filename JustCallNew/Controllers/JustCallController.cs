@@ -1,4 +1,4 @@
-﻿using JustCallNew.Models;
+﻿using JustCallNew.Client;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]

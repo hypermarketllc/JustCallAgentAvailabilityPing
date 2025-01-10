@@ -1,17 +1,9 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using JustCallNew.Models;
 
-namespace JustCallNew.Models
+namespace JustCallNew.Client
 {
-    // Add this class to format the response
-    public class UserStatusResponse
-    {
-        public string available { get; set; }
-
-        [JsonPropertyName("on call")]  // This will make it appear as "on call" in the JSON
-        public string onCall { get; set; }
-    }
-
     public class JustCallApiClient
     {
         private readonly HttpClient _httpClient;
@@ -25,7 +17,7 @@ namespace JustCallNew.Models
             _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"{apiKey}:{apiSecret}");
         }
 
-        public async Task<UserStatusResponse> GetUserAsync(int userId)
+        public async Task<AvailabiliyStatus> GetUserAsync(int userId)
         {
             try
             {
@@ -36,17 +28,26 @@ namespace JustCallNew.Models
                     var errorContent = await response.Content.ReadAsStringAsync();
                     throw new Exception($"Status: {response.StatusCode}, Error: {errorContent}");
                 }
-
+                
                 var jsonString = await response.Content.ReadAsStringAsync();
-                var jsonDoc = JsonDocument.Parse(jsonString);
-                var data = jsonDoc.RootElement.GetProperty("data");
+                var responseData = JsonSerializer.Deserialize<UserStatusResponse>(jsonString);
 
-                // Create our custom response
-                return new UserStatusResponse
+                var status = new AvailabiliyStatus
                 {
-                    available = data.GetProperty("available").GetString(),
-                    onCall = data.GetProperty("on_call").GetString()
+                    Available =  string.IsNullOrEmpty(responseData.Data.Available) ? "" : responseData.Data.Available,
+                    OnCall = responseData.Data.OnCall
                 };
+
+                if (responseData != null)
+                {
+                    return status;
+                }
+                else
+                {
+                    return new AvailabiliyStatus();
+                }
+                // Create our custom response
+                
             }
             catch (HttpRequestException ex)
             {
